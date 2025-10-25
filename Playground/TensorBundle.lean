@@ -12,7 +12,16 @@ We then define `TensorR0Space (r : ℕ)` by r-mutlilinear map to `CotangentSpace
 isomorphic to the (r,0) tensors. Consideration for Banach manifold is left for a future project.
 `TensorR0Bundle` is the abbrevation Bundle.TotalSpace (TensorRSModel 𝕜 E r s) (TensorRSSpace r s I : M → Type _)
 
-After some clearance of inference problem, we inductively show that the `TensorR0Bundle`
+After some clearance of inference problem, we inductively construct a structure `tensorBundleData (r: ℕ)`
+which stores four instances `topology` `fiber` `vector` `smooth,` that the (r,0) tensor bundle is
+a topological space, a fibre bundle, a vector bundle, and a smooth vector bundle respectively.
+
+We finally define (r,s) tensor bundle as the hom bundle from (s,0) tensor bundle to (r,0) tensor bundle,
+then show the instance `tensorRSBundle_smooth (r s : ℕ)`
+  ContMDiffVectorBundle n
+    (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+     ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+      (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x) I
 
 To do:
 Construct Cotangent Bundle v
