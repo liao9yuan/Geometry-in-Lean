@@ -4,15 +4,20 @@ Let `M` be a manifold with model `I` on `(E, H),` whereas we assumed that `M` ha
 The tangent space `TangentSpace I (x : M)` has already been defined as a type synonym for `E`,
 and the tangent bundle `TangentBundle I M` as an abbrev of `Bundle.TotalSpace E (TangentSpace I : M → Type _)`.
 
-The cotangent space `CotangentSpace I (x : M)` is the dual TangentSpace I x →L[𝕜] 𝕜
-  TangentSpace I x →L[𝕜] 𝕜
+The cotangent space `CotangentSpace I (x : M)` is the dual TangentSpace I x →L[𝕜] 𝕜 and `CotangentBundle`
+is defined similarily to `TangentBundle` as to `TangentSpace I (x:M),` namely to be abbreviation
+Bundle.TotalSpace (E →L[𝕜] 𝕜) (CotangentSpace I: M → Type _)
 
+We then define `TensorR0Space (r : ℕ)` by r-mutlilinear map to `CotangentSpace,` which in finite dimension
+isomorphic to the (r,0) tensors. Consideration for Banach manifold is left for a future project.
+`TensorR0Bundle` is the abbrevation Bundle.TotalSpace (TensorRSModel 𝕜 E r s) (TensorRSSpace r s I : M → Type _)
 
+After some clearance of inference problem, we inductively show that the `TensorR0Bundle`
 
 To do:
 Construct Cotangent Bundle v
-Construct (n,0) tensors
-Construct (n,k) tensors
+Construct (n,0) tensors v
+Construct (n,k) tensors v
 Einstein convention/ Frame Bundle?
 Lie Derivative
 -/
@@ -279,6 +284,14 @@ instance tensorR0Bundle_topology (r : ℕ) :
   (tensorBundleData n r).topology
 
 
+/- this will give error in header-/
+noncomputable instance tensorR0Bundle_fiber_inst (r : ℕ) :
+    FiberBundle
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+      (TensorR0Space r I : M → Type _) := by
+  letI : TopologicalSpace (TensorR0Bundle (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) r) :=
+    (tensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r).topology
+  exact (tensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r).fiber
 
 
 
