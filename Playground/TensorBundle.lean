@@ -110,7 +110,8 @@ noncomputable instance (r : ℕ) :
 
 
 noncomputable instance (r : ℕ) :
-    NormedAddCommGroup ((E →L[𝕜] 𝕜) →L[𝕜] ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜) :=
+    NormedAddCommGroup ((E →L[𝕜] 𝕜) →L[𝕜]
+      ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜) :=
   @ContinuousLinearMap.toNormedAddCommGroup 𝕜 𝕜
     (E →L[𝕜] 𝕜) (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
     inferInstance inferInstance inferInstance inferInstance inferInstance inferInstance
@@ -222,6 +223,7 @@ structure TensorBundleData (𝕜 : Type*) [NontriviallyNormedField 𝕜]
 
 
 
+
 noncomputable def tensorBundleData_zero :
     TensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) 0 := {
   topology := tensorR0_topologicalSpace_zero
@@ -233,7 +235,7 @@ noncomputable def tensorBundleData_zero :
       (fun x : M => ContinuousMultilinearMap 𝕜 (fun _ : Fin 0 => E →L[𝕜] 𝕜) 𝕜) I) using 2
 }
 
-noncomputable def tensorBundleData : (r : ℕ) →
+noncomputable instance tensorBundleData : (r : ℕ) →
     TensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r
   | 0 => tensorBundleData_zero  (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n)
   | r + 1 => by
@@ -292,36 +294,69 @@ instance tensorR0Bundle_topology (r : ℕ) :
       (TensorR0Space r I : M → Type _)) :=
   (tensorBundleData n r).topology
 
+@[simp, reducible]
+noncomputable instance tensorR0Bundle_fiber (r : ℕ) :
+    @FiberBundle
+      M                                                              -- {B : Type} base
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜) -- (F : Type) model fiber
+      _                                                              -- [TopologicalSpace B]
+      _                                                              -- [TopologicalSpace F]
+      (TensorR0Space r I)                                            -- (E : B → Type) bundle
+      (tensorR0Bundle_topology (n := n) r)                           -- [TopologicalSpace (TotalSpace F E)]
+      _                                                              -- [(b : B) → TopologicalSpace (E b)]
+      :=
+  (@tensorBundleData 𝕜 _ E _ _ _ H _ I M _ _ n _ r).fiber
 
-/- this will give error in header-/
-noncomputable instance tensorR0Bundle_fiber_inst (r : ℕ) :
-    FiberBundle
-      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
-      (TensorR0Space r I : M → Type _) := by
-  letI : TopologicalSpace (TensorR0Bundle (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) r) :=
-    (tensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r).topology
-  exact (tensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r).fiber
 
+-- Vector bundle instance with explicit topology
+@[simp]
+noncomputable instance tensorR0Bundle_vector (r : ℕ) :
+    @VectorBundle
+      𝕜                                                              -- 1. R: field
+      M                                                              -- 2. B: base manifold
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜) -- 3. F: model fiber
+      (TensorR0Space r I)                                            -- 4. E: bundle
+      _                                                              -- 5. [NontriviallyNormedField R]
+      _                                                              -- 6. [(x : M) → AddCommMonoid (E x)]
+      _                                                              -- 7. [(x : M) → Module R (E x)]
+      _                                                              -- 8. [NormedAddCommGroup F]
+      _                                                              -- 9. [NormedSpace R F]
+      _                                                              -- 10. [TopologicalSpace M]
+      (tensorR0Bundle_topology (n := n) r)                           -- 11. [TopologicalSpace (TotalSpace F E)] ← KEY!
+      _                                                              -- 12. [(x : M) → TopologicalSpace (E x)]
+      (tensorBundleData n r).fiber                                   -- 13. [FiberBundle F E]
+      :=
+  (tensorBundleData (n := n) r).vector
 
+@[simp]
+noncomputable instance tensorR0Bundle_smooth (r : ℕ) :
+    @ContMDiffVectorBundle
+      n                                                              -- 1. n: smoothness degree
+      𝕜                                                              -- 2. 𝕜: field
+      M                                                              -- 3. B: base manifold
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)   -- 4. F: model fiber
+      (TensorR0Space r I)                                            -- 5. E: bundle
+      _                                                              -- 6. [NontriviallyNormedField 𝕜]
+      E                                                              -- 7. EB: model space for base
+      _                                                              -- 8. [NormedAddCommGroup EB]
+      _                                                              -- 9. [NormedSpace 𝕜 EB]
+      H                                                              -- 10. HB: model topological space
+      _                                                              -- 11. [TopologicalSpace HB]
+      I                                                              -- 12. IB: model with corners
+      _                                                              -- 13. [TopologicalSpace M]
+      _                                                              -- 14. [ChartedSpace HB M]
+      _                                                              -- 15. [(x : M) → AddCommMonoid (E x)]
+      _                                                              -- 16. [(x : M) → Module 𝕜 (E x)]
+      _                                                              -- 17. [NormedAddCommGroup F]
+      _                                                              -- 18. [NormedSpace 𝕜 F]
+      (tensorR0Bundle_topology (n := n) r)                           -- 19. [TopologicalSpace (TotalSpace F E)] ← KEY!
+      _                                                              -- 20. [(x : M) → TopologicalSpace (E x)]
+      (tensorBundleData n r).fiber                                   -- 21. [FiberBundle F E]
+      (tensorBundleData n r).vector                                  -- 22. [VectorBundle 𝕜 F E]
+      :=
+  (tensorBundleData (n := n) r).smooth
 
-/-temp 3-/
-
-variable [∀ r, TopologicalSpace (TotalSpace
-  (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
-  (TensorR0Space r I : M → Type _))]
-
-variable [∀ r, FiberBundle
-  (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
-  (TensorR0Space r I : M → Type _)]
-
-variable [∀ r, VectorBundle 𝕜
-  (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
-  (TensorR0Space r I : M → Type _)]
-
-variable [∀ r, ContMDiffVectorBundle n
-  (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
-  (TensorR0Space r I : M → Type _) I]
-
+#check tensorR0Bundle_smooth n 5
 
 @[simp, reducible]
 def TensorRSSpace (r s : ℕ) (I : ModelWithCorners 𝕜 E H) (x : M) :=
@@ -347,25 +382,111 @@ def TensorRSBundle
   Bundle.TotalSpace (TensorRSModel 𝕜 E r s) (TensorRSSpace r s I : M → Type _)
 
 
+noncomputable def tensorRSBundle_smooth_def (r s : ℕ) :=
+  @ContMDiffVectorBundle.continuousLinearMap
+      𝕜 M
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜)  -- s is source
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)  -- r is target
+      n
+      (TensorR0Space (I := I) (M := M) s)  -- s is source (E₁)
+      (TensorR0Space (I := I) (M := M) r)  -- r is target (E₂)
+      _ _ _ _ _
+      (@tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ s)  -- source topology
+      _ _ _ _ _
+      (@tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ r)  -- target topology
+      _
+      E _ _ H _ I _ _
+      ((@tensorBundleData 𝕜 _ E _ _ _ H _ I M _ _ n _ s).fiber)   -- source fiber
+      ((@tensorBundleData 𝕜 _ E _ _ _ H _ I M _ _ n _ s).vector)  -- source vector
+      ((@tensorBundleData 𝕜 _ E _ _ _ H _ I M _ _ n _ r).fiber)   -- target fiber
+      ((@tensorBundleData 𝕜 _ E _ _ _ H _ I M _ _ n _ r).vector)  -- target vector
+      _ _
+      (@tensorR0Bundle_smooth 𝕜 _ E _ _ _ H _ I M _ _ n _ s)      -- source smooth
+      (@tensorR0Bundle_smooth 𝕜 _ E _ _ _ H _ I M _ _ n _ r)      -- target smooth
 
--- The bundle structure should come for free from Mathlib's Hom bundle
-variable (r s : ℕ)
-#check (tensorBundleData (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r).smooth
+#check tensorRSBundle_smooth_def n 5 6
 
-set_option maxHeartbeats 800000 in
+
+-- Topology instance with explicit parameters in header
+-- Adapt the topology construction from the hom bundle file with all parameters explicit
+noncomputable instance tensorRSBundle_topology_inst (r s : ℕ) :
+    @TopologicalSpace
+      (TotalSpace
+        (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+         ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+        (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x)) :=
+  @TopologicalSpace.induced
+    (TotalSpace
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+       ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+      (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x))
+    (M × (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+          ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜))
+    (fun p => (p.proj, p.2))
+    (by letI := @tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ s
+        letI := @tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ r
+        exact inferInstance)
+
+-- Instance for fiber-wise topology
+noncomputable instance tensorRSBundle_fiber_topology (r s : ℕ) (b : M) :
+    TopologicalSpace (TensorR0Space s I b →L[𝕜] TensorR0Space r I b) := by
+  letI := @tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ s
+  letI := @tensorR0Bundle_topology 𝕜 _ E _ _ _ H _ I M _ _ n _ r
+  exact inferInstance
+
+
+noncomputable instance tensorRSBundle_fiber_inst (r s : ℕ) :
+    FiberBundle
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+       ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+      (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x) :=
+
+      sorry
+
+noncomputable instance tensorRSBundle_vector_inst (r s : ℕ) :
+    VectorBundle 𝕜
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+       ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
+      (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x) :=
+      sorry
+
+
+-- Main smooth instance
 noncomputable instance tensorRSBundle_smooth (r s : ℕ) :
+    @ContMDiffVectorBundle
+      n                                                              -- 1. n: smoothness degree
+      𝕜                                                              -- 2. 𝕜: field
+      M                                                              -- 3. B: base manifold
+      (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
+       ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜) -- 4. F: model fiber (hom type)
+      (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x) -- 5. E: bundle (hom bundle)
+      _                                                              -- 6. [NontriviallyNormedField 𝕜]
+      E                                                              -- 7. EB: model space for base
+      _                                                              -- 8. [NormedAddCommGroup EB]
+      _                                                              -- 9. [NormedSpace 𝕜 EB]
+      H                                                              -- 10. HB: model topological space
+      _                                                              -- 11. [TopologicalSpace HB]
+      I                                                              -- 12. IB: model with corners
+      _                                                              -- 13. [TopologicalSpace M]
+      _                                                              -- 14. [ChartedSpace HB M]
+      _                                                              -- 15. [(x : M) → AddCommMonoid (E x)]
+      _                                                              -- 16. [(x : M) → Module 𝕜 (E x)]
+      _                                                              -- 17. [NormedAddCommGroup F]
+      _                                                              -- 18. [NormedSpace 𝕜 F]
+      _
+      _                                                              -- 20. [(x : M) → TopologicalSpace (E x)]
+      _
+      (by apply tensorRSBundle_vector_inst)
+      := by
+        have h1 := tensorR0Bundle_smooth (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) r
+        have h2 := tensorR0Bundle_smooth (𝕜 := 𝕜) (E := E) (H := H) (I := I) (M := M) (n := n) s
+
+        apply ContMDiffVectorBundle.continuousLinearMap
+
+
+noncomputable instance tensorRSBundle_smooth' (r s : ℕ) :
     ContMDiffVectorBundle n
       (ContinuousMultilinearMap 𝕜 (fun _ : Fin s => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
        ContinuousMultilinearMap 𝕜 (fun _ : Fin r => E →L[𝕜] 𝕜) 𝕜)
       (fun x : M => TensorR0Space s I x →L[𝕜] TensorR0Space r I x) I :=
   ContMDiffVectorBundle.continuousLinearMap
-
-
-#check tensorRSBundle_smooth 5 6
-
-
-set_option maxHeartbeats 800000 in
-#synth ContMDiffVectorBundle n
-      (ContinuousMultilinearMap 𝕜 (fun _ : Fin 5 => E →L[𝕜] 𝕜) 𝕜 →L[𝕜]
-       ContinuousMultilinearMap 𝕜 (fun _ : Fin 6 => E →L[𝕜] 𝕜) 𝕜)
-      (fun x : M => TensorR0Space 5 I x →L[𝕜] TensorR0Space 6 I x) I
